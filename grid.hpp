@@ -296,7 +296,7 @@ public:
 
     const value_type *data() const;
 
-    bool equal(const Grid<value_type, _Alloc> &another, bool(*equalFunc)(const value_type &first, const value_type &second) = nullptr) const;
+    bool equal(const Grid<value_type, _Alloc> &another, bool equalFunc(const value_type &first, const value_type &second) = nullptr) const;
 
     row_type operator[](size_type col);
     const row_type operator[](size_type col) const;
@@ -726,7 +726,7 @@ const typename Grid<_Tp, _Alloc>::value_type *Grid<_Tp, _Alloc>::data() const
 }
 
 template<typename _Tp, typename _Alloc>
-bool Grid<_Tp, _Alloc>::equal(const Grid<typename Grid<_Tp, _Alloc>::value_type, _Alloc> &another, bool(*equalFunc)(const typename Grid<_Tp, _Alloc>::value_type &, const typename Grid<_Tp, _Alloc>::value_type &)) const
+bool Grid<_Tp, _Alloc>::equal(const Grid<typename Grid<_Tp, _Alloc>::value_type, _Alloc> &another, bool equalFunc(const typename Grid<_Tp, _Alloc>::value_type &, const typename Grid<_Tp, _Alloc>::value_type &)) const
 {
     if(!equalFunc)
         return this->operator==(another);
