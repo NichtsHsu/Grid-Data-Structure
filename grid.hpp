@@ -329,7 +329,7 @@ public:
     void fill(const value_type &value, iterator begin, iterator end);
 
     void reverse(bool horizontal = true, bool vertical = true);
-    Grid<value_type> range(size_type row1, size_type col1, size_type row2, size_type col2);
+    Grid<value_type> range(size_type row1, size_type col1, size_type row2, size_type col2) const;
 
     _Alloc get_allocator() const;
 
@@ -1179,7 +1179,7 @@ void Grid<_Tp, _Alloc>::reverse(bool horizontal, bool vertical)
 }
 
 template<typename _Tp, typename _Alloc>
-Grid<typename Grid<_Tp, _Alloc>::value_type> Grid<_Tp, _Alloc>::range(typename Grid<_Tp, _Alloc>::size_type row1, typename Grid<_Tp, _Alloc>::size_type col1, typename Grid<_Tp, _Alloc>::size_type row2, typename Grid<_Tp, _Alloc>::size_type col2)
+Grid<typename Grid<_Tp, _Alloc>::value_type> Grid<_Tp, _Alloc>::range(typename Grid<_Tp, _Alloc>::size_type row1, typename Grid<_Tp, _Alloc>::size_type col1, typename Grid<_Tp, _Alloc>::size_type row2, typename Grid<_Tp, _Alloc>::size_type col2) const
 {
     if(row1 > row2)
     {
@@ -1205,6 +1205,8 @@ Grid<typename Grid<_Tp, _Alloc>::value_type> Grid<_Tp, _Alloc>::range(typename G
     for(size_type row = 0; row < row2 - row1; row++)
         for(size_type col = 0; col < col2 - col1; col++)
             newGrid[row][col] = at(row + row1, col + col1);
+    
+    return newGrid;
 }
 
 template<typename _Tp, typename _Alloc>
