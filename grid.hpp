@@ -64,7 +64,7 @@
  *
  *      More, if you provide one argument, it will be regarded as index:
  *                      equivalent
- *          grid.at(7)  ==========>  grid(2, 3)
+ *          grid.at(7)  ==========>  grid.at(1, 3)
  *                      rows=3
  *                      columns=4
  *
