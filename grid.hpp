@@ -13,7 +13,7 @@
 /*************************************************************************************************
  *                          Grid Data Structure
  * Author: Nihil
- * Last modified: Oct. 13, 2019
+ * Last modified: Dec 3, 2019
  *
  * Usage:
  *
@@ -215,11 +215,11 @@ public:
         pointer _ptr;
     };
 
-    class const_iterator: public std::iterator<std::random_access_iterator_tag, value_type>
+    class const_iterator: public std::iterator<std::random_access_iterator_tag, const value_type>
     {
     public:
         const_iterator() = delete;
-        const_iterator(const_pointer ptr);
+        const_iterator(pointer ptr);
         const_iterator(const const_iterator &another);
         const_iterator(const iterator &another);
         ~const_iterator();
@@ -300,7 +300,7 @@ public:
     reference at(size_type index);
     const_reference at(size_type index) const;
 
-    void clear() noexcept;
+    void clear();
     void swap(Grid &another) noexcept;
 
     void realloc(size_type rows, size_type cols);
@@ -329,7 +329,7 @@ public:
     void fill(const value_type &value, iterator begin, iterator end);
 
     void reverse(bool horizontal = true, bool vertical = true);
-    Grid<value_type> range(size_type row1, size_type col1, size_type row2, size_type col2) const;
+    Grid<value_type> range(size_type row1, size_type col1, size_type row2, size_type col2);
 
     _Alloc get_allocator() const;
 
@@ -359,7 +359,7 @@ Grid<_Tp, _Alloc>::Grid(const typename Grid<_Tp, _Alloc>::value_type *const data
 {
     try
     {
-        m_grid = m_allocator.allocate(rows * cols);
+        m_grid = std::allocator_traits<_Alloc>::allocate(m_allocator, rows * cols);
     }
     catch(const std::bad_alloc &e)
     {
@@ -381,7 +381,7 @@ Grid<_Tp, _Alloc>::Grid(typename Grid<_Tp, _Alloc>::size_type rows, typename Gri
 
     try
     {
-        m_grid = m_allocator.allocate(rows * cols);
+        m_grid = std::allocator_traits<_Alloc>::allocate(m_allocator, rows * cols);
     }
     catch(const std::bad_alloc &e)
     {
@@ -391,7 +391,7 @@ Grid<_Tp, _Alloc>::Grid(typename Grid<_Tp, _Alloc>::size_type rows, typename Gri
         throw e;
     }
 
-    for(size_type i = 0; i < rows * cols; i++)
+    for(size_type i = 0; i < rows * cols; ++i)
         m_grid[i] = fill;
 }
 
@@ -411,7 +411,7 @@ Grid<_Tp, _Alloc>::Grid(std::initializer_list<std::initializer_list<Grid<_Tp, _A
 
     try
     {
-        m_grid = m_allocator.allocate(m_rows * m_columns);
+        m_grid = std::allocator_traits<_Alloc>::allocate(m_allocator, m_rows * m_columns);
     }
     catch(const std::bad_alloc &e)
     {
@@ -421,7 +421,7 @@ Grid<_Tp, _Alloc>::Grid(std::initializer_list<std::initializer_list<Grid<_Tp, _A
         throw e;
     }
 
-    for(size_type i = 0; i < m_rows * m_columns; i++)
+    for(size_type i = 0; i < m_rows * m_columns; ++i)
         m_grid[i] = m_empty;
 
     size_type row = 0;
@@ -453,7 +453,7 @@ Grid<_Tp, _Alloc>::Grid(const std::vector<std::vector<_Tp> > &data, const Grid<_
 
     try
     {
-        m_grid = m_allocator.allocate(m_rows * m_columns);
+        m_grid = std::allocator_traits<_Alloc>::allocate(m_allocator, m_rows * m_columns);
     }
     catch(const std::bad_alloc &e)
     {
@@ -463,7 +463,7 @@ Grid<_Tp, _Alloc>::Grid(const std::vector<std::vector<_Tp> > &data, const Grid<_
         throw e;
     }
 
-    for(size_type i = 0; i < m_rows * m_columns; i++)
+    for(size_type i = 0; i < m_rows * m_columns; ++i)
         m_grid[i] = m_empty;
 
     size_type row = 0;
@@ -491,7 +491,7 @@ Grid<_Tp, _Alloc>::Grid(const Grid<_Tp, _Alloc> &another):
 
     try
     {
-        m_grid = m_allocator.allocate(m_rows * m_columns);
+        m_grid = std::allocator_traits<_Alloc>::allocate(m_allocator, m_rows * m_columns);
     }
     catch(const std::bad_alloc &e)
     {
@@ -501,8 +501,8 @@ Grid<_Tp, _Alloc>::Grid(const Grid<_Tp, _Alloc> &another):
         throw e;
     }
 
-    for(size_t i = 0; i < m_rows; i++)
-        for(size_t j = 0; j < m_columns; j++)
+    for(size_t i = 0; i < m_rows; ++i)
+        for(size_t j = 0; j < m_columns; ++j)
             at(i, j) = another.at(i, j);
 
     m_empty = another.m_empty;
@@ -529,7 +529,7 @@ Grid<_Tp, _Alloc> &Grid<_Tp, _Alloc>::operator=(std::initializer_list<std::initi
 
     try
     {
-        m_grid = m_allocator.allocate(m_rows * m_columns);
+        m_grid = std::allocator_traits<_Alloc>::allocate(m_allocator, m_rows * m_columns);
     }
     catch(const std::bad_alloc &e)
     {
@@ -539,7 +539,7 @@ Grid<_Tp, _Alloc> &Grid<_Tp, _Alloc>::operator=(std::initializer_list<std::initi
         throw e;
     }
 
-    for(size_type i = 0; i < m_rows * m_columns; i++)
+    for(size_type i = 0; i < m_rows * m_columns; ++i)
         m_grid[i] = m_empty;
 
     size_type row = 0;
@@ -570,7 +570,7 @@ Grid<_Tp, _Alloc> &Grid<_Tp, _Alloc>::operator=(const Grid<_Tp, _Alloc> &another
 
     try
     {
-        m_grid = m_allocator.allocate(m_rows * m_columns);
+        m_grid = std::allocator_traits<_Alloc>::allocate(m_allocator, m_rows * m_columns);
     }
     catch(const std::bad_alloc &e)
     {
@@ -580,8 +580,8 @@ Grid<_Tp, _Alloc> &Grid<_Tp, _Alloc>::operator=(const Grid<_Tp, _Alloc> &another
         throw e;
     }
 
-    for(size_t i = 0; i < m_rows; i++)
-        for(size_t j = 0; j < m_columns; j++)
+    for(size_t i = 0; i < m_rows; ++i)
+        for(size_t j = 0; j < m_columns; ++j)
             at(i, j) = another.at(i, j);
 
     return *this;
@@ -596,8 +596,8 @@ bool Grid<_Tp, _Alloc>::operator==(const Grid<_Tp, _Alloc> &another) const
     if(m_columns != another.columns())
         return false;
 
-    for(size_type i = 0; i < m_rows; i++)
-        for(size_type j = 0; j < m_columns; j++)
+    for(size_type i = 0; i < m_rows; ++i)
+        for(size_type j = 0; j < m_columns; ++j)
             if(at(i, j) != another.at(i, j))
                 return false;
 
@@ -649,37 +649,37 @@ typename Grid<_Tp, _Alloc>::const_iterator Grid<_Tp, _Alloc>::cend() const
 template<typename _Tp, typename _Alloc>
 typename Grid<_Tp, _Alloc>::reverse_iterator Grid<_Tp, _Alloc>::rbegin()
 {
-    return reverse_iterator(iterator(m_grid + size() - 1));
+    return reverse_iterator(iterator(m_grid + size()));
 }
 
 template<typename _Tp, typename _Alloc>
 typename Grid<_Tp, _Alloc>::const_reverse_iterator Grid<_Tp, _Alloc>::rbegin() const
 {
-    return const_reverse_iterator(const_iterator(m_grid + size() - 1));
+    return const_reverse_iterator(const_iterator(m_grid + size()));
 }
 
 template<typename _Tp, typename _Alloc>
 typename Grid<_Tp, _Alloc>::const_reverse_iterator Grid<_Tp, _Alloc>::crbegin() const
 {
-    return const_reverse_iterator(const_iterator(m_grid + size() - 1));
+    return const_reverse_iterator(const_iterator(m_grid + size()));
 }
 
 template<typename _Tp, typename _Alloc>
 typename Grid<_Tp, _Alloc>::reverse_iterator Grid<_Tp, _Alloc>::rend()
 {
-    return reverse_iterator(iterator(m_grid - 1));
+    return reverse_iterator(iterator(m_grid));
 }
 
 template<typename _Tp, typename _Alloc>
 typename Grid<_Tp, _Alloc>::const_reverse_iterator Grid<_Tp, _Alloc>::rend() const
 {
-    return const_reverse_iterator(const_iterator(m_grid - 1));
+    return const_reverse_iterator(const_iterator(m_grid));
 }
 
 template<typename _Tp, typename _Alloc>
 typename Grid<_Tp, _Alloc>::const_reverse_iterator Grid<_Tp, _Alloc>::crend() const
 {
-    return const_reverse_iterator(const_iterator(m_grid - 1));
+    return const_reverse_iterator(const_iterator(m_grid));
 }
 
 template<typename _Tp, typename _Alloc>
@@ -732,8 +732,8 @@ bool Grid<_Tp, _Alloc>::equal(const Grid<typename Grid<_Tp, _Alloc>::value_type,
     if(m_columns != another.columns())
         return false;
 
-    for(size_type i = 0; i < m_rows; i++)
-        for(size_type j = 0; j < m_columns; j++)
+    for(size_type i = 0; i < m_rows; ++i)
+        for(size_type j = 0; j < m_columns; ++j)
             if(!equalFunc(at(i, j), another.at(i, j)))
                 return false;
 
@@ -793,10 +793,13 @@ typename Grid<_Tp, _Alloc>::const_reference Grid<_Tp, _Alloc>::at(Grid<_Tp, _All
 }
 
 template<typename _Tp, typename _Alloc>
-void Grid<_Tp, _Alloc>::clear() noexcept
+void Grid<_Tp, _Alloc>::clear()
 {
+    for(size_type i = 0; i < m_rows * m_columns; ++i)
+        std::allocator_traits<_Alloc>::destroy(m_allocator, m_grid + i);
+
     if(m_grid != nullptr)
-        m_allocator.deallocate(m_grid, m_rows * m_columns);
+        std::allocator_traits<_Alloc>::deallocate(m_allocator, m_grid, m_rows * m_columns);
     m_grid = nullptr;
     m_rows = 0;
     m_columns = 0;
@@ -831,7 +834,7 @@ void Grid<_Tp, _Alloc>::realloc(typename Grid<_Tp, _Alloc>::size_type rows, type
 
     try
     {
-        m_grid = m_allocator.allocate(rows * cols);
+        m_grid = std::allocator_traits<_Alloc>::allocate(m_allocator,rows * cols);
     }
     catch(const std::bad_alloc &e)
     {
@@ -841,7 +844,7 @@ void Grid<_Tp, _Alloc>::realloc(typename Grid<_Tp, _Alloc>::size_type rows, type
         throw e;
     }
 
-    for(size_type i = 0; i < rows * cols; i++)
+    for(size_type i = 0; i < rows * cols; ++i)
         m_grid[i] = m_empty;
 }
 
@@ -854,7 +857,7 @@ void Grid<_Tp, _Alloc>::realloc(typename Grid<_Tp, _Alloc>::size_type rows, type
 
     try
     {
-        m_grid = m_allocator.allocate(rows * cols);
+        m_grid = std::allocator_traits<_Alloc>::allocate(m_allocator,rows * cols);
     }
     catch(const std::bad_alloc &e)
     {
@@ -864,7 +867,7 @@ void Grid<_Tp, _Alloc>::realloc(typename Grid<_Tp, _Alloc>::size_type rows, type
         throw e;
     }
 
-    for(size_type i = 0; i < rows * cols; i++)
+    for(size_type i = 0; i < rows * cols; ++i)
         m_grid[i] = value;
 }
 
@@ -884,7 +887,7 @@ void Grid<_Tp, _Alloc>::realloc(std::initializer_list<std::initializer_list<type
 
     try
     {
-        m_grid = m_allocator.allocate(m_rows * m_columns);
+        m_grid = std::allocator_traits<_Alloc>::allocate(m_allocator,m_rows * m_columns);
     }
     catch(const std::bad_alloc &e)
     {
@@ -921,7 +924,7 @@ void Grid<_Tp, _Alloc>::reshape(typename Grid<_Tp, _Alloc>::size_type rows, type
 
     try
     {
-        m_grid = m_allocator.allocate(rows * cols);
+        m_grid = std::allocator_traits<_Alloc>::allocate(m_allocator,rows * cols);
     }
     catch(const std::bad_alloc &e)
     {
@@ -931,18 +934,18 @@ void Grid<_Tp, _Alloc>::reshape(typename Grid<_Tp, _Alloc>::size_type rows, type
         throw e;
     }
 
-    for(size_type i = 0; i < std::min(old_size, m_rows * m_columns); i++)
+    for(size_type i = 0; i < std::min(old_size, m_rows * m_columns); ++i)
     {
         m_grid[i] = old_grid[i];
     }
 
-    for(size_type i = std::min(old_size, m_rows * m_columns); i < m_rows * m_columns; i++)
+    for(size_type i = std::min(old_size, m_rows * m_columns); i < m_rows * m_columns; ++i)
     {
         m_grid[i] = m_empty;
     }
 
     if(m_grid != nullptr)
-        m_allocator.deallocate(old_grid, old_size);
+        std::allocator_traits<_Alloc>::deallocate(m_allocator, old_grid, old_size);
 }
 
 template<typename _Tp, typename _Alloc>
@@ -959,7 +962,7 @@ void Grid<_Tp, _Alloc>::resize(Grid::size_type rows, Grid::size_type cols)
 
     try
     {
-        m_grid = m_allocator.allocate(rows * cols);
+        m_grid = std::allocator_traits<_Alloc>::allocate(m_allocator,rows * cols);
     }
     catch(const std::bad_alloc &e)
     {
@@ -971,12 +974,12 @@ void Grid<_Tp, _Alloc>::resize(Grid::size_type rows, Grid::size_type cols)
 
     fill(m_empty);
 
-    for(size_type i = 0; i < std::min(old_rows, m_rows); i++)
-        for(size_type j = 0; j < std::min(old_columns, m_columns); j++)
+    for(size_type i = 0; i < std::min(old_rows, m_rows); ++i)
+        for(size_type j = 0; j < std::min(old_columns, m_columns); ++j)
             at(i, j) = old_grid[i * old_columns + j];
 
     if(m_grid != nullptr)
-        m_allocator.deallocate(old_grid, old_rows * old_columns);
+        std::allocator_traits<_Alloc>::deallocate(m_allocator, old_grid, old_rows * old_columns);
 }
 
 template<typename _Tp, typename _Alloc>
@@ -995,7 +998,7 @@ template<typename _Tp, typename _Alloc>
 typename Grid<_Tp, _Alloc>::size_type Grid<_Tp, _Alloc>::count(const typename Grid<_Tp, _Alloc>::value_type &value) const noexcept
 {
     size_type count = 0;
-    for(size_type i = 0; i < m_rows * m_columns; i++)
+    for(size_type i = 0; i < m_rows * m_columns; ++i)
         if(m_grid[i] == value)
             count++;
 
@@ -1029,7 +1032,7 @@ void Grid<_Tp, _Alloc>::setEmptyObject(const typename Grid<_Tp, _Alloc>::value_t
 template<typename _Tp, typename _Alloc>
 typename Grid<_Tp, _Alloc>::size_type Grid<_Tp, _Alloc>::replace(const typename Grid<_Tp, _Alloc>::value_type &oldValue, const typename Grid<_Tp, _Alloc>::value_type &newValue)
 {
-    for(size_type i = 0; i < m_rows * m_columns; i++)
+    for(size_type i = 0; i < m_rows * m_columns; ++i)
         if(m_grid[i] == oldValue)
             m_grid[i] = newValue;
 }
@@ -1076,7 +1079,7 @@ void Grid<_Tp, _Alloc>::fillRow(typename Grid<_Tp, _Alloc>::size_type index, con
 {
     if(index >= m_rows)
         throw std::out_of_range(std::string("Grid<> : Out of range at row ") + std::to_string(index) + std::string(" of ") + std::to_string(m_rows));
-    for(size_type i = 0; i < m_columns; i++)
+    for(size_type i = 0; i < m_columns; ++i)
         at(index, i) = value;
 }
 
@@ -1085,14 +1088,14 @@ void Grid<_Tp, _Alloc>::fillColumn(typename Grid<_Tp, _Alloc>::size_type index, 
 {
     if(index >= m_columns)
         throw std::out_of_range(std::string("Grid<> : Out of range at column ") + std::to_string(index) + std::string(" of ") + std::to_string(m_columns));
-    for(size_type i = 0; i < m_rows; i++)
+    for(size_type i = 0; i < m_rows; ++i)
         at(i, index) = value;
 }
 
 template<typename _Tp, typename _Alloc>
 void Grid<_Tp, _Alloc>::fillEmpty(const typename Grid<_Tp, _Alloc>::value_type &value)
 {
-    for(size_type i = 0; i < m_rows * m_columns; i++)
+    for(size_type i = 0; i < m_rows * m_columns; ++i)
         if(m_grid[i] == m_empty)
             m_grid[i] = value;
 }
@@ -1100,7 +1103,7 @@ void Grid<_Tp, _Alloc>::fillEmpty(const typename Grid<_Tp, _Alloc>::value_type &
 template<typename _Tp, typename _Alloc>
 void Grid<_Tp, _Alloc>::fill(const typename Grid<_Tp, _Alloc>::value_type &value)
 {
-    for(size_type i = 0; i < m_rows * m_columns; i++)
+    for(size_type i = 0; i < m_rows * m_columns; ++i)
         m_grid[i] = value;
 }
 
@@ -1147,8 +1150,8 @@ void Grid<_Tp, _Alloc>::reverse(bool horizontal, bool vertical)
     else if(!vertical)
     {
         value_type tmp = m_empty;
-        for(size_type i = 0; i < m_rows; i++)
-            for(size_type j = 0; j < m_columns / 2; j++)
+        for(size_type i = 0; i < m_rows; ++i)
+            for(size_type j = 0; j < m_columns / 2; ++j)
             {
                 tmp = at(i, j);
                 at(i, j) = at(i, m_columns - j - 1);
@@ -1158,8 +1161,8 @@ void Grid<_Tp, _Alloc>::reverse(bool horizontal, bool vertical)
     else if(!horizontal)
     {
         value_type tmp = m_empty;
-        for(size_type i = 0; i < m_rows / 2; i++)
-            for(size_type j = 0; j < m_columns; j++)
+        for(size_type i = 0; i < m_rows / 2; ++i)
+            for(size_type j = 0; j < m_columns; ++j)
             {
                 tmp = at(i, j);
                 at(i, j) = at(m_rows - i - 1, j);
@@ -1169,7 +1172,7 @@ void Grid<_Tp, _Alloc>::reverse(bool horizontal, bool vertical)
     else
     {
         value_type tmp = m_empty;
-        for(size_type i = 0; i < m_rows * m_columns / 2; i++)
+        for(size_type i = 0; i < m_rows * m_columns / 2; ++i)
         {
             tmp = m_grid[i];
             m_grid[i] = m_grid[m_rows * m_columns - i - 1];
@@ -1179,7 +1182,7 @@ void Grid<_Tp, _Alloc>::reverse(bool horizontal, bool vertical)
 }
 
 template<typename _Tp, typename _Alloc>
-Grid<typename Grid<_Tp, _Alloc>::value_type> Grid<_Tp, _Alloc>::range(typename Grid<_Tp, _Alloc>::size_type row1, typename Grid<_Tp, _Alloc>::size_type col1, typename Grid<_Tp, _Alloc>::size_type row2, typename Grid<_Tp, _Alloc>::size_type col2) const
+Grid<typename Grid<_Tp, _Alloc>::value_type> Grid<_Tp, _Alloc>::range(typename Grid<_Tp, _Alloc>::size_type row1, typename Grid<_Tp, _Alloc>::size_type col1, typename Grid<_Tp, _Alloc>::size_type row2, typename Grid<_Tp, _Alloc>::size_type col2)
 {
     if(row1 > row2)
     {
@@ -1205,8 +1208,6 @@ Grid<typename Grid<_Tp, _Alloc>::value_type> Grid<_Tp, _Alloc>::range(typename G
     for(size_type row = 0; row < row2 - row1; row++)
         for(size_type col = 0; col < col2 - col1; col++)
             newGrid[row][col] = at(row + row1, col + col1);
-    
-    return newGrid;
 }
 
 template<typename _Tp, typename _Alloc>
@@ -1362,7 +1363,7 @@ typename Grid<_Tp, _Alloc>::reference Grid<_Tp, _Alloc>::iterator::operator[](si
 }
 
 template<typename _Tp, typename _Alloc>
-Grid<_Tp, _Alloc>::const_iterator::const_iterator(const_pointer ptr)
+Grid<_Tp, _Alloc>::const_iterator::const_iterator(pointer ptr)
 {
     _ptr = ptr;
 }
